@@ -12,11 +12,11 @@ output:
 
 Welcome to <R SQL Fundamentals>. Our goals for today's workshop are:
 
-1.  Explain what a relational database is and why we would want to use it.
+1.  Explain what SQL is and why we would want to use it.
 
-2.  Access and query a database using SQL.
+2.  Understand the basic SQL workflow.
 
-3.  Use `DBI` and `dbplyr` to query data from a relational database.
+3.  Access and query a database using SQL using `DBI` and `dbplyr` packages.
 
 Throughout this workshop series, we will use the following icons:
 
@@ -34,25 +34,23 @@ Throughout this workshop series, we will use the following icons:
 
 ## Motivation
 
-In many situations, you will work with data that is too big to fit into your R memory (or local environment).
+SQL (Structured Query Language), read SEQUEL, is a standardized programming language used to interact with relational database management systems.
 
-However, R reads data into random-access memory (RAM) at once and this object lives in memory entirely.
+SQL is a standard practice in many data professions and used in the following situations:
 
--   If object.size \> memory.size, the process will crash R.
+-   **Accessing Data from the Web/Cloud**: Many modern applications and services store data in cloud-based databases (e.g., Amazon Web Services (AWS), Google Cloud, Microsoft Azure). SQL is used to query and retrieve this data for analysis, reporting, or displaying on websites or mobile apps.
 
--   Therefore, we would want to **reduce the size of the data** when we read it in R for any type of big data analysis.
+    -   Example: A business analytics dashboard querying cloud databases to pull real-time sales data from an online store.
+
+-   **Shared Collaboration**: In collaborative work environments, SQL is used to access shared data repositories, enabling teams to work together on data analysis or data-driven projects.
+
+-   **Data Cleaning and Transformation**: SQL is used to clean, filter, and manipulate raw data before analysis, such as removing duplicates, correcting errors, or transforming data into a usable format. Most importantly, we can use SQL to reduce the size of the data when we read it in R for any type of big data analysis.
+
+    -   R reads data into random-access memory (RAM) at once and this object lives in memory entirely. If object.size \> memory.size, the process will crash R.
 
 ![](../images/R_session_aborted.png)
 
-### Techniques to deal with big data
-
-For medium sized files (1-2 GB), you may try to reduce the size of the file by using R packages and functions . For example:
-
--   `data.table::fread(file path, select = c("column 1", "column 2"))`. This command imports data faster than `read.csv()` does. You can also import only the columns you're interested in.
-
-    -   However, with `data.table::fread`, you can't filter the data to specific conditions before reading the data.
-
-For even larger files (\> 2-10 GB), a standard practice is to locate the data into a **database** and **access** it. In other words, you would want to explore the data and pull the objects of interest when you need them.
+As briefly mentioned earlier, SQL is used to interact with relational database management systems (RDBMS). So what is a relational database?
 
 ### What is a Relational Database?
 
@@ -76,47 +74,31 @@ In the example below, we have a relational database where three tables are conne
 
 ## What is SQL?
 
-SQL (Structured Query Language), read SEQUEL, is a standardized programming language used to interact with relational database management systems. SQL is the most common language employed in data querying, with its purpose being to extract, manipulate, and analyze data stored in relational databases. Here are some facts about SQL:
+SQL is the most common language employed in data querying and used to extract, manipulate, and analyze data stored in relational databases. Here are some facts about SQL:
 
 -   SQL was developed by IBM Corporation in the 1970s.
 
 -   SQL allows users to create, read, update, and delete data stored in relational database tables, as well as manage the database itself.
 
--   SQL is a **declarative** **language**, not a procedural language. This allows a much easier, optimized data querying ([what to do \> how to do](https://www.sqlite.org/queryplanner.html)).
-
-    -   A declarative language focuses on *what* you want to achieve, rather than *how* to do it. The database management system will figure out an optimal way to execute the query.
-
-    -   A procedural language, in contrast, requires you to specify *how* the task is accomplished, step by step.
-
-        -   Step 1: Open a connection to the database.
-
-        -   Step 2: Scan the employees table row by row.
-
-        -   Step 3: Check if the department column equals 'HR'.
-
-        -   Step 4: Extract the name and age values for matching rows.
-
-        -   Step 5: Return the results.
-
 ### SQL Workflow
 
 Here is what a typical SQL workflow would look like:
 
--   Step 1: Create and connect to a database. Note that server also can be your laptop (called [localhost](https://en.wikipedia.org/wiki/Localhost#:~:text=In%20computer%20networking%2C%20localhost%20is,via%20the%20loopback%20network%20interface.)).
+-   Step 1: Create and/or connect to a database.
+    -   In most scenarios, you will **connect** to an existing database that stores data you want to access.
+        -   The **client** refers to any system, application, or user that needs to interact with the database. It can be a computer running an application, a mobile device, or a web browser.
+        -   The **server** in this context is a computer or a software system that hosts the database and provides services to clients. It manages the database and processes the SQL queries sent by clients.
+        -   **SQL** is the language used by the client to request and manipulate data on the server's database. The server processes these SQL queries and returns the results to the client.
+    -   Sometimes, you will be the one **creating** the database from the scratch suited for specific purposes. This also means that you would also be **copying** existing tables in your machine to the database.
+    -   Databases are usually stored remotely (e.g. AWS, Google Cloud). However, when creating a new database, it's often more convenient to create the database on your own local machine in the development and testing phase.
 
 ![](https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Client-server-model.svg/500px-Client-server-model.svg.png)
 
--   Step 2: Copy a table to the database
+-   Step 2: Query the table
 
-    -   Option 1: You can create a table and insert rows manually. In order to do that, you also need to define data schema (the structure of the database).
+-   Step 3: Pull the results of interests (more simply put, your queried data)
 
-    -   Option 2: Copy a file (object) to a table in a database using `copy_to`). We take this option as it's fast and we would like to focus on querying in this workshop.
-
--   Step 3: Query the table
-
--   Step 4: Pull the results of interests (more simply put, your queried data)
-
--   Step 5: Disconnect the database
+-   Step 4: Disconnect the database
 
 ## Setup
 
@@ -126,19 +108,22 @@ We are going to rely on three key packages in R to interact with SQL in R. The s
 
 -   `DBI` is a **general-purpose SQL Interace**, meaning you can use it to interact with different database engines. It allows users to directly execute raw SQL commands for querying, creating, updating, and deleting data or tables.
 
--   `RSQLite` is an interface to the **SQLite** **database**. Like DBI, it enables you to create, read, update, and query databases using SQL commands. However, it is specific to the SQLite database.
+    -   A **database engine** is the underlying software component that manages how data is stored, retrieved, and manipulated within a database.
 
-    -   SQLite is a **relational database management system (RDBMS)** that uses SQL as its query language. It differs from other traditional RDBMS (e.g. MySQL, PostgreSQL) in that they are:
+-   `RSQLite` is an interface to the **SQLite** **database**. Like DBI, it enables you to create, read, update, and query databases using SQL commands.
 
-        -   Serverless: No need for a server process to manage the database.
+    -   There are also other traditional RDBMS (e.g. MySQL, PostgreSQL, MariaDB), which we will not get into this workshop. They all share similar syntax, but differ in terms of more advanced operations and features.
 
-        -   File-Based: Data is stored in a single `.sqlite` or `.db` file.
+    -   A major feature of SQLite is that it is serverless—process that wants to access the database reads and writes directly from the database files on disk.
 
-        -   Cross-Platform: SQLite databases can be used across different operating systems without modification.
+        | RDBMS | SQLite | MySQL | PostgreSQL | MariaDB |
+        |----------|----------------|----------------|----------------|----------------|
+        | Type | Serverless | Server-based | Server-based | Server-based |
+        | Advantages | Lightweight and simple | Widely used and fast | Feature-rich and robust | Widely used and fast |
+        | Use Cases | Small-scale projects | General web applications | Large-data intensive environments | General web applications |
 
--   `dbplyr` is a R-centric interface for interacting with databases using familiar `dplyr` syntax (e.g. mutate, filter, select). It abstracts SQL queries; you work with the database as if it's an in-memory `data.frame`.
+-   `dbplyr` is a R-centric interface for interacting with databases using familiar `dplyr` syntax (e.g. mutate, filter, select). You work with the database as if it's an in-memory `data.frame`.
 
-    -   [dbplyr is a dplyr **backend**, which means that you keep writing dplyr code but the backend executes it differently.](https://r4ds.hadley.nz/databases#dbplyr-basics) … dbplyr translates to SQL.
     -   `dplyr` automatically loads `dbplyr` for you when it sees you working with a database.
 
 We can load these package using `pacman::p_load()`, which reduces steps for installing and loading several packages simultaneously.
@@ -158,14 +143,16 @@ pacman::p_load(
 )
 ```
 
-## Create a Database
+## Step 1. Create a Database
 
 For the most part, you will be using SQL to access a database that already exists for you. In this workshop, however, we're going to start with creating a new empty database in our memory.
 
-We will first define a **backend engine** that we'll use to interact with the database. `RSQLite::SQLite()` is the function from the `RSQLite` package that specifies that the SQLite database engine is being used. This engine is what actually processes the database operations like creating tables, inserting data, querying, etc.
+We will first define a **database engine** that we'll use to interact with the database.
+
+`RSQLite::SQLite()` is the function from the `RSQLite` package that specifies that the SQLite database engine is being used. This engine is what actually processes the database operations like creating tables, inserting data, querying, etc.
 
 ```{r}
-# Define a backend engine 
+# Define a database engine 
 drv <- RSQLite::SQLite()
 ```
 
@@ -173,7 +160,7 @@ Next, we will create an empty in-memory database.
 
 `DBI::dbConnect` is the function from the **DBI** package used to establish a connection to a database. You are passing it two arguments:
 
--   `drv`: the backend engine (`RSQLite` in this case).
+-   `drv`: the database engine (`RSQLite::SQLite` in this case).
 
 -   `dbname = ":memory:"`: this specifies that the database should be created **in-memory**, meaning the database exists only temporarily while the R session is active. No physical database file is created on the disk. Once the R session is closed, the data and database are lost.
 
@@ -200,14 +187,14 @@ In most scenarios, you will be connecting to an existing database. In these situ
 
 ```{r}
 # Connect to an existing database 
-# con <- DBI::dbConnect(RMariaDB::MariaDB(), 
+# con <- DBI::dbConnect(drv = RPostgres::Postgres(), 
   # host = "database.rstudio.com",
- # user = "hadley",
- # password = rstudioapi::askForPassword("Database password")
+ # user = "user_id",
+ # password = "password"
 # )
 ```
 
-## Copy Tables Into Database
+## Step 2. Copy Tables Into Database
 
 Now that we successfully created and connected to a database, let's copy some existing tables into this database!
 
@@ -307,50 +294,64 @@ Although SQL queries could be intimidating at first, they are very useful in a r
 
 ### Approach 1: `DBI::dbGetQuery`
 
-The first approach uses the `dbGetQuery` function from the `DBI` package to query the tables from the connection. A standard SQL query involves the following commands:
+The first approach uses the `dbGetQuery` function from the `DBI` package to query the tables from the connection.
 
--   **SELECT** desired columns
+Let's access all columns from the `acs` table. We do this by specifying a `statement` argument in the `dbi::dbGetQuery` function.
+
+We will start with the most simple operations:
+
+-   **SELECT** desired columns (\* selects all columns)
 
 -   **FROM** tables
 
--   **WHERE** conditions are met
+-   The semicolon (;) is used to **terminate** a query, telling the SQL engine that the query has ended and can be executed. It is optional for `dbGetQuery` function, but always including it is a good practice.
 
--   **ORDER BY** results in a specific order
+```{r}
+dbGetQuery(conn = con,
+    statement = "SELECT * 
+                FROM acs;") 
+```
 
-There are multiple ways of querying data using SQL commands. Look into these additional resources if you want to explore further SQL queries ([SQL Tutorial](https://www.sqltutorial.org/sql-cheat-sheet/), [DataCamp](https://www.datacamp.com/cheat-sheet/sql-basics-cheat-sheet)).
+This is a big table that has 72,551 rows and 13 columns. What if we just want to examine the first 10 rows before we decide what columns we would want to retrieve?
 
-Before we follow all these steps, let's first select all columns from `acs` table and the first ten rows to decide what data we would want to retrieve. We do this by specifying a `statement` argument in the `dbi::dbGetQuery` function.
-
-In our statement, we have four components:
-
--   `SELECT *` : Select all columns (\*)
-
--   `FROM acs` : From the `acs` table in the connection.
-
--   `LIMIT 10` : Return the first 10 rows from the table.
-
--   `;` : The semicolon is used to **terminate** a query, telling the SQL engine that the query has ended and can be executed. It is optional for `dbGetQuery` function, but always including it is a good practice.
+-   **LIMIT** number of rows
 
 ```{r}
 dbGetQuery(conn = con,
     statement = "SELECT * 
                 FROM acs
-                LIMIT 10;")
+                LIMIT 6;")
 ```
 
-Note that we can save our R memory if we run this function without saving the results as an object. This is really helpful when we are investigating a structure of a huge, complex big datasets.
+Now that we are more familiar with the overall structure of this table, let's only retrieve values from the `family_ID`, `age`, `state`, and `income` columns.
+
+-   **SELECT** column1, column2, column3, ...
+
+```{r}
+dbGetQuery(conn = con,
+    statement = "SELECT family_ID, age, state, income
+                FROM acs;")
+```
+
+Notice that we don't see any new objects created in our R environment, despite accessing significant amounts of data.
+
+We can save our R memory if we run these function without saving the results as an object. This is really helpful when we are working with huge, complex big datasets.
 
 #### Querying
 
 Now that we are able to get a sense of what the overall table looks like, we can also use the `WHERE` and `ORDER BY` commands to fetch only the columns and values that we want for our analysis.
 
+-   **WHERE** conditions are met
+
+-   **ORDER BY** results in a specific order
+
 For example, what if we want to analyze the income of individuals between the ages of 25 and 34 living in California?
 
-We would only need to retrieve individuals whose (1) `age` is between 25 and 34 and `state` is "California". We would also only need one additional column (`income`).
+We would only need to retrieve individuals whose `age` is between 25 and 34 and `state` is "California". We would also only need one additional column (`income`).
 
 We can rewrite our query statement as follows:
 
--   `SELECT age, state, income` : Select specified columns
+-   `SELECT family_ID, age, state, income` : Select specified columns
 
 -   `FROM acs` : From the `acs` table in the connection.
 
@@ -358,9 +359,11 @@ We can rewrite our query statement as follows:
 
 -   `ORDER BY age ASC, income DESC` : Sort the values in the ascending order of the `age` column and the descending order of the `income` column.
 
+This time, let's store our results in a new data frame `acs_chunk`. What do you notice?
+
 ```{r}
 acs_chunk <- dbGetQuery(conn = con, 
-                statement = "SELECT age, state, income
+                statement = "SELECT family_ID, age, state, income
                              FROM acs
                              WHERE age >= 25 AND age <= 34 AND state = 'California'
                              ORDER BY age ASC, income DESC;")
@@ -368,7 +371,7 @@ acs_chunk <- dbGetQuery(conn = con,
 print(acs_chunk) # Check data frame
 ```
 
-This exercise shows why SQL is such a powerful for managing and analyzing big data. Let's check how large our original `flights` dataset is compared to the new table we've just pulled using SQL query.
+This exercise shows why SQL is such a powerful for managing and analyzing big data. Let's check how large our original dataset is compared to the new table we've just pulled using SQL query.
 
 We can use `dim` function to check the dimensions (numbers of rows and columns) for each data frame.
 
@@ -381,15 +384,29 @@ Notice that the original `acs` table has 72,551 rows and 13 columns, but `acs_ch
 
 If we have a specific question we want to answer with our dataset, we can use SQL queries to minimize the amount of data we are pulling into our R environment.
 
+There are multiple ways of querying data using SQL commands. Look into these additional resources if you want to explore further SQL queries ([SQL Tutorial](https://www.sqltutorial.org/sql-cheat-sheet/), [DataCamp](https://www.datacamp.com/cheat-sheet/sql-basics-cheat-sheet)).
+
 #### Joining Tables
 
 A key feature of relational databases are that they can have multiple tables that can be joined with each other using keys. Joining allows researchers to merge different datasets to enrich their analysis.
 
 We are not going to extensively cover the different types of join operations in this workshop, but below is a diagram for a quick reminder on the different types of joins ([link](https://tavareshugo.github.io/r-intro-tidyverse-gapminder/08-joins/index.html)).
 
+Some of the most commonly used join operations include:
+
+-   **FULL JOIN**: Returns all records when there is a match in either left or right table, with NULLs where there is no match.
+
+-   **INNER JOIN**: Returns records that have matching values in both tables.
+
+-   **LEFT JOIN**: Returns all records from the left table and matching records from the right table, or NULL if there is no match.
+
+-   **RIGHT JOIN**: Returns all records from the right table and matching records from the left table, or NULL if there is no match.
+
 ![](../images/dplyr_joins.svg)
 
-For example, let's say we are interested in understanding how immigration is related to income levels at the state level. In addition to the `acs` table, we will now need to use the information on immigration share in the `states` table.
+Let's say we are interested in understanding how immigration is related to median rent levels at the state level.
+
+In addition to the `acs` table, we will now need to use the information on median rent in the `states` table.
 
 One approach to achieving this task is by conducting `dbGetQuery` twice—once for the `acs` table and the other for `states` table—and then joining the resulting data frames together in R.
 
@@ -397,7 +414,7 @@ One approach to achieving this task is by conducting `dbGetQuery` twice—once f
 # Query and retrieve income data
 acs_income <- dbGetQuery(conn = con, 
                 statement = "SELECT age, income, state
-                             FROM acs")
+                             FROM acs;")
 
 # Query and retrieve state-level immigration data
 states_rent <- dbGetQuery(conn = con, 
@@ -412,10 +429,16 @@ Since both data tables have a `state` column as a key, we can use it to join the
 joined_data <- left_join(acs_income, states_rent, by = "state")
 
 # Check if the data has been properly joined
-head(joined_data)
+joined_data
 ```
 
-However, we can also directly conduct joins as we query our data, which simplifies the process and saves storage in the memory.
+However, we can also directly conduct joins as we query our data in `dbGetQuery` statement, which simplifies the process and saves storage in the memory.
+
+-   **SELECT** table1.column1, table1.column2, ..., table2.column1, table2.column2, ...
+
+-   **FROM** table1
+
+-   **JOIN** table2 ON table1.key_column = table2.key_column
 
 ```{r}
 joined_data <- dbGetQuery(conn = con, 
@@ -432,7 +455,7 @@ head(joined_data)
 
 Since we do not have to store our data as an object in R environment, SQL can help drastically save storage in our R memory.
 
-For example, if we want to visualize the average departure delay time by month in JFK based on the above query:
+For example, if we want to visualize state's average household income and median rent using the above query:
 
 ```{r}
 dbGetQuery(conn = con, 
@@ -457,22 +480,23 @@ The `acs` table contains `income` column as well as a `educ` column, which conta
 
 In the `states` table, the `region` column indicates the regional classification of each state (e.g. West, Midwest, South, Norhteast).
 
-Can you use `dbGetQuery` to filter the `acs` table to individuals who have a bachelor's degree (`educ` value of "BA") and summarize median income for that group by `region`? Which region has the highest average income?
+Can you use `dbGetQuery` to summarize median income by `region`? Which region has the highest average income? You will need to first query the data and use `group_by` and `summarize` functions to wrangle the accessed data.
 
 ```{r}
 ## YOUR CODE HERE
 dbGetQuery(conn = con, 
                 statement = "SELECT acs.age, acs.income, acs.state, states.region
                              FROM acs
-                             LEFT JOIN states ON acs.state = states.state
-                             WHERE acs.educ = 'BA';") |>
+                             LEFT JOIN states ON acs.state = states.state;") |>
   group_by(region) |>
   summarise(mean_income = mean(income, na.rm=TRUE))
 ```
 
 ### Approach 2. `dbplyr`
 
-Another approach to querying data that does not use SQL commands is through the `dbplyr` package in R. `dbplyr` is an extremely powerful tool because it uses the `dplyr` syntax, which is widely used among R users for data querying.
+So far, we've used the `dbGetQuery` function in the `DBI` package to query our data, writing out SQL commands in the `statement` argument.
+
+Howver, in R, we have an easier approach to querying data that does not use SQL commands. `dbplyr` is an extremely powerful tool because it uses the `dplyr` syntax, which is widely used among R users for data querying.
 
 Here is what a standard workflow looks like:
 
@@ -495,11 +519,21 @@ con |>
   collect() 
 ```
 
-Similarly, we can also filter the data to the income of individuals between the ages of 25 and 34 living in California using the familiar `dplyr` syntax, instead of relying on the SQL commands.
+What if we want to select `family_ID`, `age`, `state` and `income` columns?
+
+```{r}
+con |>
+  tbl("acs") |>
+  select(family_ID, age, state, income) |>
+  collect()
+```
+
+Similarly, we can also filter the data to the income of individuals between the ages of 25 and 34 living in California using the familiar `dplyr` syntax, instead of relying on the more complex SQL commands.
 
 ```{r}
 acs_chunk2 <- con |>
   tbl("acs") |>
+  select(family_ID, age, state, income) |>
   filter(age >= 25, age <= 34, state == "California") |>
   arrange(age, desc(income)) |>
   collect()  # Fetch the data into R
@@ -508,6 +542,8 @@ print(acs_chunk2)
 ```
 
 We could do the same for conducting joins! We just need to use `tbl` multiple times—one for each table we are pulling from the connection.
+
+We are retrieving and joining the `states` table to the `acs` table through `tbl(con, "states")`.
 
 ```{r}
 joined_data2 <- con |>
@@ -521,22 +557,24 @@ print(joined_data2)
 
 ## 🥊 Challenge 3: Querying and manipulating data using `dbplyr`
 
-We want to learn more about how regional differences relate to the relationship between educational attainment and income for Black individuals.
+We want to learn more about how regional differences relate to the relationship between educational attainment and income for Black (`race` column has the value "black") individuals.
 
 This time, use `tbl()` and `collect()` to retrieve and join `acs` and `states` tables using the "state" column as the key.
 
 Can you group the data by `region` and `educ` to see how the average income among Black individuals vary by region and educational attainment?
 
+Hint: You will need to use `group_by` and `summarize` functions to get mean average income by `region` and `educ`.
+
 ```{r}
 # YOUR CODE HERE
-plot_data <- con |>
+df3 <- con |>
   tbl("acs") |>
   left_join(tbl(con, "states"), by = c("state")) |>
   select(age, income, race, educ, state, region) |>
   filter(race=="black") |>
   collect()
 
-plot_data |>
+df3 |>
   group_by(region, educ) |>
   summarise(mean_income = mean(income, na.rm=TRUE)) |>
   arrange(educ, region)
@@ -576,9 +614,9 @@ You can use the `DBI::dbDisconnect` function to do this.
 DBI::dbDisconnect(con)
 ```
 
-## 🎬 Demo: Next Time...
+## 🎬 Demo: Other Engines
 
-In this workshop, we primarily relied on `RSQLite` as a backend engine for working with SQL. However, there are many other **relational database management systems (RDBMS)** that need other methods of establishing a connection.
+In this workshop, we primarily relied on `RSQLite` as a database engine for working with SQL. However, there are other database engines that need other methods of establishing a connection.
 
 R provides a range of packages to work with these RDBMs, such as `RPostgreSQL` (for PostgreSQL databases) and `RMySQL` (for MySQL databses).
 
@@ -604,13 +642,13 @@ dbDisconnect(con)
 
 ## Key Points
 
-1.  Working with big data requires careful selection of columns and rows before storing it as an object in R environment.
-2.  SQL is the most widely-employed programming language to extract, manipulate, and analyze data stored in relational databases.
-3.  `RSQLite`, `DBI`, and `dbplyr` are packages we can use to assess relational databases using SQL in R.
+1.  SQL is the most widely-employed programming language to extract, manipulate, and analyze data stored in relational databases.
+2.  We can use `DBI` and `dbplyr` packages to assess relational databases using SQL in R. There are different database engines, such as SQLite, MySQL, PostgreSQL, and MariaDB.
+3.  We can query and manipulate the data in databases using SQL before loading them into our R environment.
 
 ## Next Steps...
 
-In many real-world situations, you will be assessing relational databases that already exist. In these cases, you would need to provide `host`, `user`, and `password` arguments to assess those databases. Sometimes, you would need also need to rely on a different backend engine than `SQLite` to navigate different database management systems.
+In many real-world situations, you will be assessing relational databases that already exist. In these cases, you would need to provide `host`, `user`, and `password` arguments to assess those databases. Sometimes, you would need also need to rely on a different database engine than `SQLite` to navigate different database management systems.
 
 `dbplyr` is a powerful tool for navigating relational databases without having to rely on SQL commands. You can take DLab's [R Data Wrangling](https://github.com/dlab-berkeley/R-Data-Wrangling) workshops to better familiarize yourself with working with the `dplyr` syntax.
 
