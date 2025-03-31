@@ -1,7 +1,6 @@
 # D-Lab R SQL Fundamentals Workshop
 
 [![DataHub](https://img.shields.io/badge/launch-datahub-blue)](http://dlab.datahub.berkeley.edu/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fdlab-berkeley%2FR-SQL-Fundamentals&urlpath=lab%2Ftree%2FR-SQL-Fundamentals%2F)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dlab-berkeley/R-SQL-Fundamentals/HEAD)
 [![License: CC BY
 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
@@ -84,7 +83,7 @@ If you do not have R installed and the materials loaded on your workshop
 by the time it starts, we *strongly* recommend using the UC Berkeley
 Datahub to run the materials for these lessons. You can access the
 DataHub by clicking [this
-link](https://datahub.berkeley.edu/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fdlab-berkeley%2FR-Data-Visualization&urlpath=rstudio%2F&branch=main).
+link](http://dlab.datahub.berkeley.edu/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fdlab-berkeley%2FR-SQL-Fundamentals&urlpath=lab%2Ftree%2FR-SQL-Fundamentals%2F).
 
 The DataHub downloads this repository, along with any necessary
 packages, and allows you to run the materials in an RStudio instance on
